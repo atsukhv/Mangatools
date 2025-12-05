@@ -3,11 +3,11 @@ import imageio.v3 as iio
 from rich.progress import Progress, BarColumn, TextColumn, TimeRemainingColumn
 
 
-def clean_files(folder: Path, progress: Progress, files_to_delete_patterns: list[str]):
+def clean_files(folder: Path, progress: Progress, files_to_delete: list[str]):
     """
-    Удаляет все файлы из списка files_to_delete_patterns.
+    Удаляет все файлы из списка files_to_delete.
     """
-    files = [f for f in folder.rglob("*") if f.is_file() and f.name in files_to_delete_patterns]
+    files = [f for f in folder.rglob("*") if f.is_file() and f.name in files_to_delete]
     task = progress.add_task("Удаление лишних файлов", total=len(files))
 
     for file in files:
@@ -35,17 +35,22 @@ def convert_avif_to_png(folder: Path, progress: Progress):
             progress.update(task, advance=1)
     progress.remove_task(task)
 
-def clean_and_convert(folder: Path, files_to_delete_patterns: list[str]):
+def clean_and_convert(folder: Path, files_to_delete: list[str]):
     with Progress(
             TextColumn("[bold blue]{task.description}"),
             BarColumn(),
             TextColumn("[progress.percentage]{task.percentage:>3.0f}%"),
             TimeRemainingColumn()
     ) as progress:
-        clean_files(folder, progress)
+        clean_files(folder, progress, files_to_delete)
         convert_avif_to_png(folder, progress)
 
 if __name__ == "__main__":
-    manga_folder = Path(r"D:\Библиотека kindle\Загрузки\Berserk_Sorted")
+    manga_folder = Path(r"D:\Библиотека kindle\Solanin")
 
-    clean_and_convert(manga_folder)
+    PATTERNS_FILE = Path("files_to_delete.txt")
+    files_to_delete_patterns = [
+        line.strip() for line in PATTERNS_FILE.read_text(encoding="utf-8").splitlines() if line.strip()
+    ]
+
+    clean_and_convert(manga_folder, files_to_delete_patterns)

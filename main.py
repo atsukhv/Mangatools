@@ -12,6 +12,7 @@ files_to_delete_patterns = [
 ]
 
 async def main(url: str, source_folder: Path, output_folder: Path, files_to_delete_patterns: list[str]):
+    print("Начало загрузки")
     await mc_downloader(url, source_folder)
     await get_chapters_name(url)
     await sort_manga(source_folder, output_folder)
@@ -20,7 +21,7 @@ async def main(url: str, source_folder: Path, output_folder: Path, files_to_dele
 
 
 if __name__ == "__main__":
-    url = "https://im.manga-chan.me/manga/4093-vagabond.html"
+    url = "https://im.manga-chan.me/manga/3624-solanin.html"
     source_folder = Path(r"D:\Библиотека kindle\Загрузки")
     output_folder = Path(r"D:\Библиотека kindle\Загрузки")
 
