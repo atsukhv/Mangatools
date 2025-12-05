@@ -1,0 +1,15 @@
+manga-chan.me.txt
+avifdec.exe
+Преобразовать avif в png.cmd
+
+image000x1.png
+image000x1.jpg
+image000x2.png
+image000x2.jpg
+image000x3.png
+image000x3.jpg
+image0000.png
+image001.png
+image001.jpg
+image002.png
+image002.jpg
