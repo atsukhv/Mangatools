@@ -46,7 +46,7 @@ def clean_and_convert(folder: Path, files_to_delete: list[str]):
         convert_avif_to_png(folder, progress)
 
 if __name__ == "__main__":
-    manga_folder = Path(r"D:\Библиотека kindle\Solanin")
+    manga_folder = Path(r"D:\Библиотека kindle\Berserk")
 
     PATTERNS_FILE = Path("files_to_delete.txt")
     files_to_delete_patterns = [

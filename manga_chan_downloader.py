@@ -73,7 +73,7 @@ async def download_all_manga(manga_page_url: str, save_folder: Path):
 
 if __name__ == "__main__":
     # ссылка на мангу (можно передавать динамически)
-    manga_page = "https://im.manga-chan.me/manga/4093-vagabond.html"
-    folder = r"D:\Библиотека kindle\Загрузки"
+    manga_page = "https://im.manga-chan.me/manga/105000-chainsaw-man.html"
+    folder = Path(r"D:\Библиотека kindle\Загрузки")
 
     asyncio.run(download_all_manga(manga_page, folder))

@@ -5,6 +5,7 @@ description = "Add your description here"
 requires-python = ">=3.14"
 dependencies = [
     "aiohttp>=3.13.2",
+    "customtkinter>=5.2.2",
     "imageio>=2.37.2",
     "loguru>=0.7.3",
     "playwright>=1.56.0",

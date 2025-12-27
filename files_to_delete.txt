@@ -9,6 +9,8 @@ image000x2.jpg
 image000x3.png
 image000x3.jpg
 image0000.png
+image0000.jpg
+image000x4.jpg
 image001.png
 image001.jpg
 image002.png
