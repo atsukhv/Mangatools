@@ -6,6 +6,7 @@ requires-python = ">=3.14"
 dependencies = [
     "aiohttp>=3.13.2",
     "customtkinter>=5.2.2",
+    "flet>=0.80.0",
     "imageio>=2.37.2",
     "loguru>=0.7.3",
     "playwright>=1.56.0",

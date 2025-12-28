@@ -1,0 +1,19 @@
+# Эти 3 файла есть в любой манге на сайте, автоматически в СТОП листе.
+manga-chan.me.txt
+avifdec.exe
+Преобразовать avif в png.cmd
+
+# Перечислите свои варианты ниже.
+image000x1.png
+image000x1.jpg
+image000x2.png
+image000x2.jpg
+image000x3.png
+image000x3.jpg
+image0000.png
+image0000.jpg
+image000x4.jpg
+image001.png
+image001.jpg
+image002.png
+image002.jpg
