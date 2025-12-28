@@ -23,25 +23,29 @@ app.configure(fg_color=BG)
 container = ctk.CTkFrame(app, fg_color="transparent")
 container.grid(row=0, column=0, sticky="nsew", padx=30, pady=30)
 
-# Делаем колонку растягиваемой, чтобы внутренние фреймы могли растягиваться
-container.grid_columnconfigure(0, weight=1)
-
-# Если хочешь, чтобы весь app тоже адаптировался по размерам
 app.grid_rowconfigure(0, weight=1)
 app.grid_columnconfigure(0, weight=1)
+container.grid_columnconfigure(0, weight=1)
+container.grid_columnconfigure(1, weight=1)
+container.grid_columnconfigure(2, weight=1)
+container.grid_rowconfigure(0, weight=0)
+container.grid_rowconfigure(1, weight=0)
+container.grid_rowconfigure(2, weight=0)
+
+
 
 #----------- Фреймы -----------
 header_frame = ctk.CTkFrame(container,fg_color="transparent")
 header_frame.grid(row=0,column=0,sticky="ew",pady=(0, 24))
 
-search_frame = ctk.CTkFrame(container,fg_color="transparent")
-search_frame.grid(row=1,column=0,sticky="ew",pady=(0, 24))
+search_frame = ctk.CTkFrame(container, fg_color="transparent")
+search_frame.grid(row=1, column=0, columnspan=2, sticky="ew", pady=(0, 24))
 
-folder_frame = ctk.CTkFrame(container,fg_color="transparent")
-folder_frame.grid(row=2,column=0,sticky="w",pady=(0, 24))
+folder_frame = ctk.CTkFrame(container, fg_color="transparent")
+folder_frame.grid(row=2, column=0, sticky="ew")
 
-config_frame = ctk.CTkFrame(container,fg_color="transparent")
-config_frame.grid(row=2,column=1,sticky="e",pady=(0, 24))
+config_frame = ctk.CTkFrame(container, fg_color="transparent")
+config_frame.grid(row=2, column=1, sticky="ew")
 
 
 
@@ -55,84 +59,106 @@ title = ctk.CTkLabel(header_frame, text="Manga on Kindle tool", font=FONT_TITLE,
 title.grid(row=0, column=0, sticky="w")
 
 #----------- Поле для ввода ссылки -----------
+# Поле для ввода ссылки
 url_entry = ctk.CTkEntry(search_frame,
                          width=707, height=40,
                          corner_radius=0, fg_color=SECOND_BG, border_width=0,
-                         text_color=TEXT_COLOR, font=FONT_TEXT, placeholder_text="https://im.manga-chan.me/...")
-url_entry.place(x=0, y=0)
+                         text_color=TEXT_COLOR, font=FONT_TEXT,
+                         placeholder_text="https://im.manga-chan.me/...")
+url_entry.grid(row=0, column=0, sticky="ew")  # растягиваем по ширине
 
+# Кнопка поиска
 search_btn = ctk.CTkButton(search_frame, text="Найти",
-                           width=120,height=40,
-                           fg_color=ACCENT, hover_color="#FFA733", corner_radius=0, border_width=0,anchor="center",
+                           width=120, height=40,
+                           fg_color=ACCENT, hover_color="#FFA733",
+                           corner_radius=0, border_width=0,
+                           anchor="center",
                            command=lambda: choose_folder(selected_folder_label))
-search_btn.place(x=705, y=0)
+search_btn.grid(row=0, column=1)  # рядом с entry
 
+# Описание ссылки
 url_discription = ctk.CTkLabel(search_frame,
-                               text="В ставьте ссылку на мангу с сайта manga-chan - https://im.manga-chan.me/",
-                               font=FONT_TEXT,text_color=TEXT_COLOR)
-url_discription.place(x=0, y=40)
+                               text="Вставьте ссылку на мангу с сайта manga-chan - https://im.manga-chan.me/",
+                               font=FONT_TEXT, text_color=TEXT_COLOR)
+url_discription.grid(row=1, column=0, columnspan=2, sticky="w", pady=(4,0))
 
-#----------- Выбор папки -----------
+# Растяжка колонок
+search_frame.grid_columnconfigure(0, weight=1)  # entry растягивается
+search_frame.grid_columnconfigure(1, weight=0)  # кнопка фиксированная
+
+#----------- Выбор папки (grid) -----------
 folder_icon = ctk.CTkImage(Image.open("icons/folder_icon.png"), size=(20, 21))
 
+# Верхняя подпись
 folder_discription = ctk.CTkLabel(folder_frame, text="Выберите папку для загрузки файлов",
                                   font=FONT_TEXT, text_color=TEXT_COLOR)
-folder_discription.place(x=0, y=0)
+folder_discription.grid(row=0, column=0, columnspan=2, sticky="w", pady=(0,4))
 
+# Кнопка слева и поле пути справа
 folder_btn = ctk.CTkButton(folder_frame, image=folder_icon, text="",
                            width=20, height=21,
-                           fg_color=ACCENT, hover_color="#FFA733", corner_radius=0, border_width=0, anchor="center",
+                           fg_color=ACCENT, hover_color="#FFA733",
+                           corner_radius=0, border_width=0,
+                           anchor="center",
                            command=lambda: choose_folder(selected_folder_label))
-folder_btn.place(x=0, y=30)
+folder_btn.grid(row=1, column=0, sticky="w")
 
-# Поле для отображения выбранного пути
 selected_folder_label = ctk.CTkLabel(folder_frame, text="   Папка не выбрана",
                                      width=366, height=30,
-                                     fg_color=SECOND_BG, text_color=TEXT_COLOR, corner_radius=0, anchor="w")
-selected_folder_label.place(x=27, y=30)
+                                     fg_color=SECOND_BG, text_color=TEXT_COLOR,
+                                     corner_radius=0, anchor="w")
+selected_folder_label.grid(row=1, column=1, sticky="w", padx=(5,0))
+
+# Растяжка колонок
+folder_frame.grid_columnconfigure(0, weight=0)
+folder_frame.grid_columnconfigure(1, weight=1)
 
 
 #----------- Выбор конфига -----------
 open_folder_icon = ctk.CTkImage(Image.open("icons/open_folder_icon.png"), size=(20, 21))
+
+# Верхние подписи
 open_folder_discription = ctk.CTkLabel(config_frame, text="Открыть конфиг",
-                                       font=FONT_TEXT,text_color=TEXT_COLOR)
-open_folder_discription.place(x=434, y=0)
+                                       font=FONT_TEXT, text_color=TEXT_COLOR)
+open_folder_discription.grid(row=0, column=0, sticky="w")
 
-combo_label = ctk.CTkLabel(container, text="Выбрать конфиг", font=FONT_TEXT, text_color=TEXT_COLOR
-)
-combo_label.place(x=461+250, y=119+14+34)
+combo_label = ctk.CTkLabel(config_frame, text="Выбрать конфиг",
+                           font=FONT_TEXT, text_color=TEXT_COLOR)
+combo_label.grid(row=0, column=1, sticky="w")
 
-# Кнопка открытия
-open_folder_btn = ctk.CTkButton(
-    container,
-    image=open_folder_icon,
-    text="",
-    width=20,
-    height=21,
-    fg_color=ACCENT,
-    hover_color="#FFA733",
-    corner_radius=0,
-    border_width=0,
-    anchor="center",
-    command=lambda: choose_folder(selected_folder_label)
-)
-open_folder_btn.place(x=434, y=196)
+# Кнопка слева и ComboBox справа в одной строке
+button_combo_frame = ctk.CTkFrame(config_frame, fg_color="transparent")  # вложенный фрейм для "склеивания"
+button_combo_frame.grid(row=1, column=0, columnspan=2, sticky="w")
 
-# Список
-combo_box = ctk.CTkComboBox(
-    container,
-    values=get_delete_configs(),
-    width=366,
-    height=30,
-    corner_radius=0,
-    fg_color=SECOND_BG,
-    button_color=ACCENT,
-    button_hover_color="#FFA733",
-    dropdown_fg_color=SECOND_BG,
-    text_color=TEXT_COLOR,
-    border_width=0,
-)
-combo_box.place(x=461, y=196)
+open_folder_btn = ctk.CTkButton(button_combo_frame,
+                                image=open_folder_icon,
+                                text="",
+                                width=20,
+                                height=21,
+                                fg_color=ACCENT,
+                                hover_color="#FFA733",
+                                corner_radius=0,
+                                border_width=0,
+                                anchor="center",
+                                command=lambda: choose_folder(selected_folder_label))
+open_folder_btn.pack(side="left")  # слева
+
+combo_box = ctk.CTkComboBox(button_combo_frame,
+                            values=get_delete_configs(),
+                            width=366,
+                            height=30,
+                            corner_radius=0,
+                            fg_color=SECOND_BG,
+                            button_color=ACCENT,
+                            button_hover_color="#FFA733",
+                            dropdown_fg_color=SECOND_BG,
+                            text_color=TEXT_COLOR,
+                            border_width=0)
+combo_box.pack(side="left", padx=(0,0))  # прямо к кнопке, без промежутка
+
+# Колонки config_frame
+config_frame.grid_columnconfigure(0, weight=0)
+config_frame.grid_columnconfigure(1, weight=1)
 
 #----------- Инструкция -----------
 info_text = ctk.CTkLabel(
