@@ -17,6 +17,7 @@ FONT_TEXT = ("Arial", 14)
 app = ctk.CTk()
 app.title("Manga on Kindle tool")
 app.geometry("890x500")
+app.resizable(False, True) #TODO заменить на false
 app.configure(fg_color=BG)
 
 #----------- Контейнер -----------
@@ -25,12 +26,12 @@ container.grid(row=0, column=0, sticky="nsew", padx=30, pady=30)
 
 app.grid_rowconfigure(0, weight=1)
 app.grid_columnconfigure(0, weight=1)
+
+container.grid(row=0, column=0, sticky="nsew", padx=30, pady=30)
 container.grid_columnconfigure(0, weight=1)
 container.grid_columnconfigure(1, weight=1)
-container.grid_columnconfigure(2, weight=1)
-container.grid_rowconfigure(0, weight=0)
-container.grid_rowconfigure(1, weight=0)
-container.grid_rowconfigure(2, weight=0)
+
+
 
 
 
@@ -42,10 +43,13 @@ search_frame = ctk.CTkFrame(container, fg_color="transparent")
 search_frame.grid(row=1, column=0, columnspan=2, sticky="ew", pady=(0, 24))
 
 folder_frame = ctk.CTkFrame(container, fg_color="transparent")
-folder_frame.grid(row=2, column=0, sticky="ew")
+folder_frame.grid(row=2, column=0, sticky="ew", padx=(0, 20))
+folder_frame.grid_columnconfigure(0, weight=0)
+folder_frame.grid_columnconfigure(1, weight=1)
+
 
 config_frame = ctk.CTkFrame(container, fg_color="transparent")
-config_frame.grid(row=2, column=1, sticky="ew")
+config_frame.grid(row=2, column=1, sticky="ew", padx=(0, 0))
 
 
 
@@ -120,7 +124,7 @@ open_folder_icon = ctk.CTkImage(Image.open("icons/open_folder_icon.png"), size=(
 # Верхние подписи
 open_folder_discription = ctk.CTkLabel(config_frame, text="Открыть конфиг",
                                        font=FONT_TEXT, text_color=TEXT_COLOR)
-open_folder_discription.grid(row=0, column=0, sticky="w")
+folder_discription.grid(row=0, column=0, columnspan=2, sticky="w", pady=(0,4))
 
 combo_label = ctk.CTkLabel(config_frame, text="Выбрать конфиг",
                            font=FONT_TEXT, text_color=TEXT_COLOR)
