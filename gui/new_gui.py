@@ -1,7 +1,12 @@
+import asyncio
+
 import customtkinter as ctk
 from PIL import Image
+import tkinter as tk
+from loguru import logger
 
 from gui.buttons_click import choose_folder, get_delete_configs
+from manga_chan_downloader import validate_download_url, len_links
 
 #----------- Настройки ----------
 BG = "#2D2D2D"
@@ -20,20 +25,10 @@ app.geometry("890x570") #570
 app.resizable(False, False)
 app.configure(fg_color=BG)
 
-app.grid_rowconfigure(0, weight=0)
-app.grid_rowconfigure(1, weight=0)
-app.grid_columnconfigure(0, weight=1)
-
 
 #----------- Контейнер -----------
 container = ctk.CTkFrame(app, fg_color="transparent")
 container.grid(row=0, column=0, sticky="ew", padx=25, pady=25)
-
-container.grid_columnconfigure(0, minsize=420, weight=0)
-container.grid_columnconfigure(1, minsize=420, weight=0)
-container.grid_rowconfigure(0, weight=0)
-container.grid_rowconfigure(1, weight=0)
-container.grid_rowconfigure(2, weight=0)
 
 
 #----------- Фреймы -----------
@@ -85,7 +80,7 @@ url_entry = ctk.CTkEntry(search_frame,
                          corner_radius=0, fg_color=SECOND_BG, border_width=0,
                          text_color=TEXT_COLOR, font=FONT_TEXT,
                          placeholder_text="https://im.manga-chan.me/...")
-url_entry.grid(row=0, column=0, sticky="ew")  # растягиваем по ширине
+url_entry.grid(row=0, column=0, sticky="ew")
 
 # Кнопка поиска
 search_btn = ctk.CTkButton(search_frame, text="Найти",
@@ -93,8 +88,8 @@ search_btn = ctk.CTkButton(search_frame, text="Найти",
                            fg_color=ACCENT, hover_color="#FFA733",
                            corner_radius=0, border_width=0,
                            anchor="center",
-                           command=lambda: choose_folder(selected_folder_label))
-search_btn.grid(row=0, column=1)  # рядом с entry
+                           command=lambda: search())
+search_btn.grid(row=0, column=1)
 
 # Описание ссылки
 url_discription = ctk.CTkLabel(search_frame,
@@ -318,11 +313,6 @@ combo_box = ctk.CTkComboBox(
 )
 combo_box.grid(row=1, column=1, sticky="w",)
 
-
-
-
-
-
 # ----------- Прогресс-бар -----------
 progress = ctk.CTkProgressBar(
     progress_frame,
@@ -343,6 +333,62 @@ progress_text = ctk.CTkLabel(
     padx=5
 )
 progress_text.pack(side="top", fill="x", pady=(0, 0))      # текст сверху
+
+def search():
+    try:
+        valid_url = asyncio.run(validate_download_url(url_entry.get()))
+        count = asyncio.run(len_links(valid_url))
+        url_discription.configure(text=f"Найдено {count} глав.")
+    except Exception as e:
+        logger.error('Ошибка: {e}')
+        url_discription.configure(text=f"Ошибка: Ничего не найдено, проверьте ссылку.")
+
+
+# ---------- Функция вставки ----------
+def paste_from_clipboard(entry):
+    try:
+        text = entry.clipboard_get()
+        entry.insert("insert", text)
+    except tk.TclError:
+        pass
+
+# ---------- Entry ----------
+url_entry = ctk.CTkEntry(
+    search_frame,
+    width=707, height=40,
+    corner_radius=0, fg_color=SECOND_BG, border_width=0,
+    text_color=TEXT_COLOR, font=FONT_TEXT,
+    placeholder_text="https://im.manga-chan.me/..."
+)
+url_entry.grid(row=0, column=0, sticky="ew")  # растягиваем по ширине
+
+# ---------- Контекстное меню ----------
+menu = tk.Menu(url_entry, tearoff=0)
+menu.add_command(label="Вставить", command=lambda: paste_from_clipboard(url_entry))
+
+def show_menu(event):
+    menu.tk_popup(event.x_root, event.y_root)
+
+url_entry.bind("<Button-3>", show_menu)  # ПКМ
+
+# ---------- Ctrl+V на любой раскладке ----------
+def on_keypress(event):
+    # Проверка зажатого Ctrl
+    if event.state & 0x4:
+        # keycode 86 — физическая клавиша V на любой раскладке
+        if event.keycode == 86:
+            paste_from_clipboard(url_entry)
+            return "break"  # предотвращаем дублирующую вставку
+
+url_entry.bind("<KeyPress>", on_keypress)
+
+# ---------- Поиск по Enter ----------
+def on_enter():
+    search()  # передаём текст из поля
+
+url_entry.bind("<Return>", on_enter)
+url_entry.bind("<KP_Enter>", on_enter)
+
 
 if __name__ == "__main__":
     app.mainloop()

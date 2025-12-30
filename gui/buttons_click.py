@@ -21,7 +21,3 @@ def get_delete_configs():
     ]
 
     return ["(Создать новый конфиг)                                            "] + files
-
-
-def search():
-    ...
