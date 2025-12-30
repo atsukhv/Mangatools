@@ -34,3 +34,25 @@ def stop_progress():
     """Останавливает прогресс-бар"""
     if progress:
         progress.stop()
+
+
+def create_progress(total: int) -> tuple[Progress, int]:
+    progress = Progress(
+        TextColumn("[bold blue]{task.fields[filename]}"),
+        BarColumn(),
+        TextColumn("[progress.percentage]{task.percentage:>3.0f}%"),
+        TimeRemainingColumn(),
+    )
+    task_id = progress.add_task(
+        "Скачивание файлов",
+        total=total,
+        filename=""
+    )
+    return progress, task_id
+
+
+def update_progress_filename(progress: Progress, task_id: int,index: int,total: int,filename: str):
+    progress.update(task_id, filename=f"[{index}/{total}] {filename}")
+
+def advance_progress(progress: Progress, task_id: int):
+    progress.update(task_id, advance=1)

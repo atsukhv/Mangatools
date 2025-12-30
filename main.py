@@ -3,7 +3,7 @@ from pathlib import Path
 
 from cleanup import clean_and_convert
 from extract_and_sort import sort_manga
-from manga_chan_downloader import download_all_manga as mc_downloader
+from manga_chan_downloader import manga_downloader_main as mc_downloader
 from fetch_chapters_name import get_chapters_name
 
 PATTERNS_FILE = Path("files_to_delete.txt")
