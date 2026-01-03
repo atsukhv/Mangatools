@@ -1,4 +1,5 @@
 import asyncio
+import threading
 
 import customtkinter as ctk
 from PIL import Image
@@ -6,6 +7,7 @@ import tkinter as tk
 from loguru import logger
 
 from gui.buttons_click import choose_folder, get_delete_configs
+from gui.overlay import OverlayManager
 from manga_chan_downloader import validate_download_url, len_links
 
 #----------- Настройки ----------
@@ -21,9 +23,11 @@ FONT_TEXT = ("Arial", 14)
 #----------- Окно -----------
 app = ctk.CTk()
 app.title("Manga tool")
-app.geometry("890x570") #570
+app.geometry("890x500") #570
 app.resizable(False, False)
 app.configure(fg_color=BG)
+
+overlay = OverlayManager(app, BG)
 
 
 #----------- Контейнер -----------
@@ -59,8 +63,8 @@ config_frame.grid(row=5, column=0, sticky="w", pady=(0, 0))
 sorting_frame = ctk.CTkFrame(container, fg_color="transparent")
 sorting_frame.grid(row=5, column=1, sticky="w", pady=(0, 20))
 
-progress_frame = ctk.CTkFrame(app, fg_color="transparent")
-progress_frame.grid(row=2, column=0, sticky="ew", pady=(0, 0))
+# progress_frame = ctk.CTkFrame(app, fg_color="transparent")
+# progress_frame.grid(row=2, column=0, sticky="ew", pady=(0, 0))
 
 app.grid_rowconfigure(0, weight=0)     # container сверху
 app.grid_rowconfigure(1, weight=1)     # пустое место для растяжки
@@ -313,35 +317,55 @@ combo_box = ctk.CTkComboBox(
 )
 combo_box.grid(row=1, column=1, sticky="w",)
 
-# ----------- Прогресс-бар -----------
-progress = ctk.CTkProgressBar(
-    progress_frame,
-    height=15,
-    corner_radius=0,
-    fg_color=SECOND_BG,
-    progress_color=ACCENT
-)
-progress.pack(side="bottom", fill="x", pady=(0, 0))
-progress.set(0)
-
-progress_text = ctk.CTkLabel(
-    progress_frame,
-    text="Прогрессирую",
-    font=FONT_TEXT,
-    text_color=TEXT_COLOR,
-    anchor="w",
-    padx=5
-)
-progress_text.pack(side="top", fill="x", pady=(0, 0))      # текст сверху
+# # ----------- Прогресс-бар -----------
+# progress = ctk.CTkProgressBar(
+#     progress_frame,
+#     height=15,
+#     corner_radius=0,
+#     fg_color=SECOND_BG,
+#     progress_color=ACCENT
+# )
+# progress.pack(side="bottom", fill="x", pady=(0, 0))
+# progress.set(0)
+#
+# progress_text = ctk.CTkLabel(
+#     progress_frame,
+#     text="Прогрессирую",
+#     font=FONT_TEXT,
+#     text_color=TEXT_COLOR,
+#     anchor="w",
+#     padx=5
+# )
+# progress_text.pack(side="top", fill="x", pady=(0, 0))      # текст сверху
 
 def search():
-    try:
-        valid_url = asyncio.run(validate_download_url(url_entry.get()))
-        count = asyncio.run(len_links(valid_url))
-        url_discription.configure(text=f"Найдено {count} глав.")
-    except Exception as e:
-        logger.error('Ошибка: {e}')
-        url_discription.configure(text=f"Ошибка: Ничего не найдено, проверьте ссылку.")
+    url = url_entry.get().strip()
+    if not url:
+        return
+
+    overlay.show("Поиск глав...")
+
+    def task():
+        try:
+            valid_url = asyncio.run(validate_download_url(url))
+            if overlay.stop_event.is_set():
+                return
+
+            count = asyncio.run(len_links(valid_url))
+            if overlay.stop_event.is_set():
+                return
+
+            app.after(0, lambda: url_discription.configure(
+                text=f"Найдено {count} глав"
+            ))
+        except Exception:
+            app.after(0, lambda: url_discription.configure(
+                text="Ошибка поиска"
+            ))
+        finally:
+            app.after(0, overlay.hide)
+
+    threading.Thread(target=task, daemon=True).start()
 
 
 # ---------- Функция вставки ----------
@@ -388,6 +412,9 @@ def on_enter():
 
 url_entry.bind("<Return>", on_enter)
 url_entry.bind("<KP_Enter>", on_enter)
+
+
+
 
 
 if __name__ == "__main__":
