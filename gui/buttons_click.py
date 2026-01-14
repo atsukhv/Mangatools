@@ -2,10 +2,11 @@ import os
 from tkinter import filedialog
 
 
-def choose_folder(label_widget):
+def choose_folder(label_widget, data_class):
     folder_path = filedialog.askdirectory()
     if folder_path:
         label_widget.configure(text="   " + folder_path)
+        data_class.folder = folder_path
 
 
 def get_delete_configs():

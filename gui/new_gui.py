@@ -1,5 +1,6 @@
 import asyncio
 import threading
+from pathlib import Path
 
 import customtkinter as ctk
 from PIL import Image
@@ -9,7 +10,15 @@ from loguru import logger
 from gui.buttons_click import choose_folder, get_delete_configs
 from gui.overlay import OverlayManager
 from gui.theme import BG, FONT_TITLE, ACCENT, SECOND_BG, TEXT_COLOR, FONT_TEXT
-from manga_chan_downloader import validate_download_url, len_links
+from manga_chan_downloader import len_links, download_files, get_download_folder, download_files_with_overlay
+
+
+class MangaDownloader:
+    def __init__(self):
+        self.url = None
+        self.name = None
+        self.folder = None
+
 
 #----------- Окно -----------
 app = ctk.CTk()
@@ -17,6 +26,7 @@ app.title("Manga tool")
 app.geometry("890x500") #570
 app.resizable(False, False)
 app.configure(fg_color=BG)
+md = MangaDownloader()
 
 overlay = OverlayManager(app)
 
@@ -115,7 +125,7 @@ folder_btn = ctk.CTkButton(folder_frame, image=folder_icon, text="",
                            command=lambda: choose_folder(selected_folder_label))
 folder_btn.grid(row=1, column=0, sticky="w")
 
-selected_folder_label = ctk.CTkLabel(folder_frame, text="   Папка не выбрана",
+selected_folder_label = ctk.CTkLabel(folder_frame, text="   По умолчанию выбрана папка: Загрузки",
                                      width=366, height=30,
                                      fg_color=SECOND_BG, text_color=TEXT_COLOR,
                                      corner_radius=0, anchor="w")
@@ -247,6 +257,34 @@ skip_entry = ctk.CTkEntry(
 skip_entry.grid(row=1, column=5, padx=(10, 0))
 
 # ---------- Кнопка Скачать ----------
+def download_click():
+    start_chapter = from_entry.get()
+    end_chapter = to_entry.get()
+    skip_chapters = skip_entry.get()
+
+    if md.folder is None:
+        md.folder = Path(get_download_folder())
+    else:
+        md.folder = Path(md.folder)
+
+    # запускаем асинхронное скачивание в отдельном потоке
+    def task():
+        try:
+            asyncio.run(download_files_with_overlay(
+                save_folder=md.folder,
+                url=md.url,
+                start_chapter=start_chapter,
+                end_chapter=end_chapter,
+                skip_chapters=skip_chapters,
+                overlay=overlay  # передаём оверлэй
+            ))
+        except Exception as e:
+            logger.error(f"Ошибка при скачивании: {e}")
+            overlay.app.after(0, lambda: overlay.finish(0))  # завершаем оверлэй, если ошибка
+
+    threading.Thread(target=task, daemon=True).start()
+
+
 download_btn = ctk.CTkButton(
     downloads_frame,
     text="Скачать",
@@ -258,6 +296,7 @@ download_btn = ctk.CTkButton(
     border_width=0,
     font=FONT_TEXT,
     anchor="center",
+    command=download_click
 )
 download_btn.grid(row=0, column=0, pady=(48, 0))
 
@@ -319,14 +358,30 @@ def search():
 
     def task():
         try:
-            valid_url = asyncio.run(validate_download_url(url))
-            count, name = asyncio.run(len_links(valid_url))
-            print(f"Найдено ссылок: {count}")  # для консоли
-            overlay.finish(count)  # передаем количество
-        except Exception:
-            overlay.finish(0)  # на случай ошибки
+            count, name = asyncio.run(len_links(url))
+
+            def update_ui():
+                name_entry.delete(0, "end")
+                name_entry.insert(0, name)
+                from_entry.delete(0, "end")
+                from_entry.insert(0, "1")
+                to_entry.delete(0, "end")
+                to_entry.insert(0, str(count))
+                url_discription.configure(text=f"Название: {name}, Найдено {count} глав")
+                overlay.finish(count)
+                md.name = name
+                md.url = url
+
+            app.after(0, lambda: update_ui())
+
+
+        except Exception as e:
+            logger.error("Ошибка поиска:", e)
+            app.after(0, lambda: overlay.finish(0))
 
     threading.Thread(target=task, daemon=True).start()
+
+
 
 
 # ---------- Функция вставки ----------
