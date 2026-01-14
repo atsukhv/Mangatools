@@ -8,17 +8,8 @@ from loguru import logger
 
 from gui.buttons_click import choose_folder, get_delete_configs
 from gui.overlay import OverlayManager
+from gui.theme import BG, FONT_TITLE, ACCENT, SECOND_BG, TEXT_COLOR, FONT_TEXT
 from manga_chan_downloader import validate_download_url, len_links
-
-#----------- Настройки ----------
-BG = "#2D2D2D"
-SECOND_BG = "#64513C"
-ACCENT = "#FF8800"
-TEXT_COLOR = "#FFFFFF"
-
-FONT_TITLE = ("Georgia", 50, "bold")
-FONT_TEXT = ("Arial", 14)
-
 
 #----------- Окно -----------
 app = ctk.CTk()
@@ -27,7 +18,7 @@ app.geometry("890x500") #570
 app.resizable(False, False)
 app.configure(fg_color=BG)
 
-overlay = OverlayManager(app, BG)
+overlay = OverlayManager(app)
 
 
 #----------- Контейнер -----------
@@ -317,26 +308,6 @@ combo_box = ctk.CTkComboBox(
 )
 combo_box.grid(row=1, column=1, sticky="w",)
 
-# # ----------- Прогресс-бар -----------
-# progress = ctk.CTkProgressBar(
-#     progress_frame,
-#     height=15,
-#     corner_radius=0,
-#     fg_color=SECOND_BG,
-#     progress_color=ACCENT
-# )
-# progress.pack(side="bottom", fill="x", pady=(0, 0))
-# progress.set(0)
-#
-# progress_text = ctk.CTkLabel(
-#     progress_frame,
-#     text="Прогрессирую",
-#     font=FONT_TEXT,
-#     text_color=TEXT_COLOR,
-#     anchor="w",
-#     padx=5
-# )
-# progress_text.pack(side="top", fill="x", pady=(0, 0))      # текст сверху
 
 def search():
     url = url_entry.get().strip()
@@ -344,26 +315,16 @@ def search():
         return
 
     overlay.show("Поиск глав...")
+    overlay.start_timed_progress(min_sec=5, max_sec=10)
 
     def task():
         try:
             valid_url = asyncio.run(validate_download_url(url))
-            if overlay.stop_event.is_set():
-                return
-
-            count = asyncio.run(len_links(valid_url))
-            if overlay.stop_event.is_set():
-                return
-
-            app.after(0, lambda: url_discription.configure(
-                text=f"Найдено {count} глав"
-            ))
+            count, name = asyncio.run(len_links(valid_url))
+            print(f"Найдено ссылок: {count}")  # для консоли
+            overlay.finish(count)  # передаем количество
         except Exception:
-            app.after(0, lambda: url_discription.configure(
-                text="Ошибка поиска"
-            ))
-        finally:
-            app.after(0, overlay.hide)
+            overlay.finish(0)  # на случай ошибки
 
     threading.Thread(target=task, daemon=True).start()
 
@@ -407,7 +368,7 @@ def on_keypress(event):
 url_entry.bind("<KeyPress>", on_keypress)
 
 # ---------- Поиск по Enter ----------
-def on_enter():
+def on_enter(event=None):
     search()  # передаём текст из поля
 
 url_entry.bind("<Return>", on_enter)

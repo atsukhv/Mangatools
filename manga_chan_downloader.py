@@ -20,14 +20,30 @@ async def validate_download_url(manga_page_url):
     return valid_url
 
 
-async def len_links(url: str) -> int:
-    """Считает количество ссылок на скачивание, ничего не сохраняя."""
+async def len_links(url: str) -> tuple[int, str]:
+    """
+    Считает количество ссылок на скачивание и возвращает название манги.
+    Возвращает кортеж: (count_links, manga_name)
+    """
     async with init_browser(url, headless=True) as page:
         await page.goto(url, wait_until="networkidle")
-        locator = page.locator('a[href*="engine/download.php?id="]')
-        count = await locator.count()
+
+        download_locator = page.locator('a[href*="engine/download.php?id="]')
+        count = await download_locator.count()
         print(f"Найдено ссылок: {count}")
-        return count
+
+        title_locator = page.locator('a.title_top_a')
+        manga_name = await title_locator.inner_text()
+        print(f"Название манги: {manga_name}")
+
+        return count, manga_name
+
+async def locate_name(page):
+    title_locator = page.locator('a.title_top_a')
+    manga_name = await title_locator.inner_text()
+    print(f"Название манги: {manga_name}")
+
+    return manga_name
 
 
 def generate_chapter_list(start_chapter: int | None, end_chapter: int | None, total_chapters: int,

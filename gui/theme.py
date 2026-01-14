@@ -1,0 +1,7 @@
+BG = "#2D2D2D"
+SECOND_BG = "#64513C"
+ACCENT = "#FF8800"
+TEXT_COLOR = "#FFFFFF"
+
+FONT_TITLE = ("Georgia", 50, "bold")
+FONT_TEXT = ("Arial", 14)
