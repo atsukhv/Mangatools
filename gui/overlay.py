@@ -53,39 +53,42 @@ class OverlayManager:
 
         update()
 
-    def finish(self, count:int):
-        """Плавно доводит прогресс до 100% и показывает результат"""
+    def finish(self, count: int):
         self._finished = True
+        if self.progress is None:
+            return
         current = self.progress.get()
         steps = 30
         increment = (1.0 - current) / steps
-        step_delay = 20  # мс
+        step_delay = 20
 
         def step(i=0):
             nonlocal current
             if i >= steps:
-                self.progress.set(1.0)
-                # текст результата
-                self.status_label.configure(text=f"Найдено {count} глав")
+                if self.progress:  # защита
+                    self.progress.set(1.0)
+                if self.status_label:
+                    self.status_label.configure(text=f"Найдено {count} глав")
 
-                # кнопка OK
-                def close():
-                    self.hide()
+                if self.overlay:
+                    def close():
+                        self.hide()
 
-                self.ok_button = ctk.CTkButton(
-                    self.overlay,
-                    text="OK",
-                    width=100,
-                    fg_color=self.accent_color,
-                    hover_color="#FFA733",
-                    command=close
-                )
-                self.ok_button.place(relx=0.5, rely=0.62, anchor="center")
+                    self.ok_button = ctk.CTkButton(
+                        self.overlay,
+                        text="OK",
+                        width=100,
+                        fg_color=self.accent_color,
+                        hover_color="#FFA733",
+                        command=close
+                    )
+                    self.ok_button.place(relx=0.5, rely=0.62, anchor="center")
                 return
 
             current += increment
-            self.progress.set(current)
-            self.app.after(step_delay, lambda: step(i+1))
+            if self.progress:
+                self.progress.set(current)
+            self.app.after(step_delay, lambda: step(i + 1))
 
         step()
 

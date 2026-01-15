@@ -167,7 +167,6 @@ async def download_files(save_folder: Path, url: str, start_chapter, end_chapter
                     advance_progress(progress, task_id)
 
 
-
 async def download_one_file(page, link, save_folder: Path, existing_files: set[str]) -> str | None:
     filename = await link.inner_text()
     if filename in existing_files:
@@ -183,57 +182,61 @@ async def download_one_file(page, link, save_folder: Path, existing_files: set[s
     return filename
 
 
-async def download_files_with_overlay(save_folder: Path, url: str, start_chapter, end_chapter, skip_chapters, overlay: OverlayManager):
+async def download_files_with_overlay(save_folder: Path, url: str, start_chapter, end_chapter, skip_chapters,
+                                      overlay: OverlayManager):
     """Скачивает главы и обновляет прогресс бар в OverlayManager."""
-    url = validate_url_for_download(url)
+    try:
+        url = await validate_url_for_download(url)
+        existing_files = await prepare_environment(save_folder)
 
-    existing_files = prepare_environment(save_folder)
+        async with init_browser(url, headless=False) as page:
+            links = await pars_links(page)
+            total_links = len(links)
+            logger.info(f"Найдено {total_links} глав")
 
-    async with init_browser(url, headless=False) as page:
-        await page.goto(url, wait_until="networkidle")
+            chapters_to_download = generate_chapter_list(start_chapter, end_chapter, total_links, skip_chapters)
+            filtered = [(idx, link) for idx, link in enumerate(links, 1) if idx in chapters_to_download]
 
-        links = await pars_links(page)
-        total_links = len(links)
-        logger.info(f"Общее количество глав: {total_links}")
+            total_to_download = len(filtered)
+            logger.info(f"К загрузке: {total_to_download} глав")
 
-        chapters_to_download = generate_chapter_list(start_chapter, end_chapter, total_links, skip_chapters)
-        filtered = [(idx, link) for idx, link in enumerate(links, 1) if idx in chapters_to_download]
+            overlay.app.after(0, lambda: overlay.show("Подготовка к скачиванию..."))
+            overlay.app.after(0, lambda: overlay.progress.set(0))
 
-        total_to_download = len(filtered)
+            for i, (chapter_number, link) in enumerate(filtered, start=1):
+                if overlay._finished:
+                    logger.info("Загрузка остановлена пользователем")
+                    break
 
-        overlay.show("Подготовка к скачиванию...")
-        overlay.progress.set(0)
+                overlay.app.after(0, lambda c=chapter_number, t=total_to_download:
+                overlay.status_label.configure(text=f"Глава {c}/{t}\nКачается..."))
 
-        for i, (chapter_number, link) in enumerate(filtered, start=1):
-            if overlay._finished:
-                break  # пользователь нажал Stop
+                try:
+                    filename = await link.inner_text()
+                    if filename in existing_files:
+                        continue
 
-            # Обновляем текст над прогресс баром
-            overlay.app.after(0, lambda c=chapter_number, t=total_to_download:
-                              overlay.status_label.configure(text=f"Глава {c}/{t}\nКачается..."))
+                    async with page.expect_download() as download_info:
+                        await link.click()
+                    download = await download_info.value
+                    await download.save_as(save_folder / filename)
 
-            # скачиваем главу
-            try:
-                filename = await link.inner_text()
-                if filename in existing_files:
-                    continue
+                    existing_files.add(filename)
+                    logger.info(f"[Глава {chapter_number}] ✓ {filename}")
 
-                async with page.expect_download() as download_info:
-                    await link.click()
-                download = await download_info.value
-                await download.save_as(save_folder / filename)
+                except Exception as e:
+                    logger.error(f"[Глава {chapter_number}] ❌ {e}")
 
-                existing_files.add(filename)
+                finally:
+                    overlay.app.after(0, lambda idx=i, total=total_to_download: overlay.progress.set(idx / total))
 
-            except Exception as e:
-                logger.info(f"[Глава {chapter_number}] ❌ Ошибка: {e}")
+            overlay.app.after(0, lambda: overlay.finish(total_to_download))
+            logger.info("Загрузка завершена")
 
-            finally:
-                # Обновляем прогресс бар
-                overlay.app.after(0, lambda idx=i, total=total_to_download: overlay.progress.set(idx / total))
-
-        # Завершаем оверлэй
-        overlay.app.after(0, lambda: overlay.finish(total_to_download))
+    except Exception as e:
+        logger.error(f"Ошибка при скачивании: {e}")
+        overlay.app.after(0, lambda: overlay.finish(0))
+        raise
 
 
 async def manga_downloader_main(manga_page_url: str, save_folder: Path,
